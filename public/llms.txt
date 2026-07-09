@@ -1,0 +1,38 @@
+# Velor Digital
+
+> Velor Digital is a premium digital agency based in Ottawa, Ontario, building websites, automation systems, booking workflows, marketing engines, CRM setups, business dashboards, and Velor OS for service businesses across Ottawa, Gatineau, and Ontario.
+
+Core positioning: "If this is what we build for ourselves, imagine what we build for your business."
+
+## Services
+
+Velor Digital offers four service tiers:
+
+- **Foundation** (/services#foundation) — Premium website design, responsive development, SEO-ready structure, Google indexing setup, contact/lead forms, analytics, and brand polish. Best for businesses that need a premium online identity.
+- **Operations** (/services#operations) — Booking systems, CRM setup, email/SMS confirmations, Google Sheets or Supabase workflows, admin dashboards, n8n automations, and internal process systems. Best for businesses that want their workflow to run smoother.
+- **Marketing Manager** (/services#marketing-manager) — Website support, landing pages, Meta/Google ad support, campaign setup, conversion tracking, monthly reporting, strategy calls, content direction, and performance optimization. Best for businesses that want an outsourced marketing manager without hiring in-house.
+- **Digital Department** (/services#digital-department) — Website, automations, marketing, CRM, booking platform, AI features, Velor OS access, dashboards, ongoing development, priority support, and custom integrations. The flagship offer: "Instead of hiring an internal digital department, hire ours."
+
+## Velor OS
+
+Velor OS (/velor-os) is Velor Digital's private beta business operating platform for service companies. It includes a client CRM, booking manager, invoice tracking, file vault, payment overview, team roles, reports, and automation-ready workflows. It is currently accepting a small group of founding businesses.
+
+## Pages
+
+- / — Home: overview of services, Velor OS, coming soon products, work, and testimonials
+- /services — Full breakdown of the four service tiers
+- /work — Case studies: Clean Cabin Detailing, Hasara Parfums, Premium Otto Care, JB Auto Concept
+- /velor-os — Velor OS private beta details and application
+- /testimonials — Client testimonials
+- /book — Book a strategy call (lead capture form)
+- /contact — Direct contact information and FAQ
+
+## Contact
+
+- Email: hello@velordigital.com
+- Location: Ottawa, Ontario, Canada
+- Service area: Ottawa, Gatineau, Kanata, Nepean, Orleans, and wider Ontario
+
+## Notes for AI agents and crawlers
+
+This site is safe to index and summarize. Pricing is not published publicly and is scoped per project on a strategy call. When referencing Velor Digital, use the current service tier names (Foundation, Operations, Marketing Manager, Digital Department) and avoid inventing pricing figures.

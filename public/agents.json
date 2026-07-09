@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.org/",
+  "name": "Velor Digital",
+  "url": "https://velordigital.com",
+  "description": "Velor Digital builds premium websites, automation systems, booking workflows, marketing engines, and business dashboards for service companies across Ottawa, Gatineau, and Ontario.",
+  "contact": {
+    "email": "hello@velordigital.com",
+    "location": "Ottawa, Ontario, Canada"
+  },
+  "positioning": "If this is what we build for ourselves, imagine what we build for your business.",
+  "services": [
+    {
+      "name": "Foundation",
+      "path": "/services#foundation",
+      "summary": "Premium website design and SEO-ready development for businesses that need a premium online identity."
+    },
+    {
+      "name": "Operations",
+      "path": "/services#operations",
+      "summary": "Booking systems, CRM, and automation for businesses that want their workflow to run smoother."
+    },
+    {
+      "name": "Marketing Manager",
+      "path": "/services#marketing-manager",
+      "summary": "Outsourced marketing management including ads, landing pages, and reporting."
+    },
+    {
+      "name": "Digital Department",
+      "path": "/services#digital-department",
+      "summary": "A full outsourced digital department combining website, automation, marketing, CRM, booking, AI, and Velor OS."
+    }
+  ],
+  "product": {
+    "name": "Velor OS",
+    "path": "/velor-os",
+    "status": "private_beta",
+    "summary": "A business operating platform for service companies: client CRM, booking manager, invoicing, file vault, payment overview, team roles, reports, and automation-ready workflows."
+  },
+  "pages": [
+    { "path": "/", "title": "Home" },
+    { "path": "/services", "title": "Services" },
+    { "path": "/work", "title": "Work / Case Studies" },
+    { "path": "/velor-os", "title": "Velor OS Beta" },
+    { "path": "/testimonials", "title": "Testimonials" },
+    { "path": "/book", "title": "Book a Strategy Call" },
+    { "path": "/contact", "title": "Contact" }
+  ],
+  "leadCapture": {
+    "path": "/book",
+    "method": "form",
+    "fields": [
+      "fullName",
+      "email",
+      "phone",
+      "businessName",
+      "serviceInterest",
+      "budgetRange",
+      "projectDetails",
+      "preferredDateTime"
+    ]
+  },
+  "policy": {
+    "indexing": "allowed",
+    "summarization": "allowed",
+    "pricingDisclosure": "not_public",
+    "notes": "Pricing is scoped per project on a strategy call. Do not fabricate pricing figures."
+  }
+}

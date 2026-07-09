@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Velor Digital — Flagship Website
 
-## Getting Started
+The official marketing site for Velor Digital: premium websites, automation, marketing systems, and Velor OS for service businesses in Ottawa, Gatineau, and Ontario.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, Turbopack) + TypeScript
+- **Tailwind CSS v4** (CSS-based theme in `src/app/globals.css`)
+- **Framer Motion** for scroll reveals and micro-interactions
+- **React Hook Form + Zod** for the strategy-call / beta-application form
+- Fonts: **Geist** (body/UI), **Geist Mono** (dashboard metrics), **Bricolage Grotesque** (display headings)
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). If 3000 is taken: `npm run dev -- -p 3001`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build   # production build (also type-checks)
+npm run start   # serve the production build
+npm run lint    # ESLint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project structure
 
-## Learn More
+```
+src/
+  app/                  routes (App Router), SEO files (sitemap.ts, robots.ts,
+                         manifest.ts, icon.tsx, opengraph-image.tsx)
+    work/[slug]/         dynamic case-study pages
+  components/
+    layout/              Nav, Footer
+    sections/            page-level sections (Hero, ServicesGrid, BookingForm, ...)
+    ui/                  primitives (Button, GlassPanel, SectionReveal, Badge, ...)
+  lib/
+    data/                content: services, work, testimonials, coming-soon, faq
+    validations/         Zod schemas
+    schema.ts            JSON-LD builders (Organization, LocalBusiness, Service, FAQ, Review)
+    site-config.ts        site-wide constants (nav, contact info, keywords)
+public/
+  brand/                 Velor logo assets
+  llms.txt, agents.json  AI-crawler readability files
+```
 
-To learn more about Next.js, take a look at the following resources:
+## SEO
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Per-page metadata, canonical URLs, and Open Graph/Twitter cards via the App Router `metadata` API
+- Dynamic OG image + favicon generated with `next/og` (`opengraph-image.tsx`, `icon.tsx`, `apple-icon.tsx`)
+- `sitemap.xml` and `robots.txt` generated from `src/app/sitemap.ts` / `robots.ts`
+- JSON-LD: Organization, LocalBusiness (ProfessionalService), Service list, FAQPage, Review/AggregateRating, BreadcrumbList — see `src/lib/schema.ts`
+- `public/llms.txt` and `public/agents.json` describe the business and site to LLM crawlers/agents
+- Structured, visible FAQ content on `/services` and `/contact` (not schema-only, to match Google's FAQ rich-result guidance)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## What still needs to be connected
 
-## Deploy on Vercel
+The booking form (`src/components/sections/booking-form.tsx`) is fully validated and frontend-complete, but submission currently just simulates a delay. Wire it up to:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Lead intake** — POST to an n8n webhook or a Next.js Route Handler (`/api/booking`) that:
+   - Upserts the lead into Supabase (or your CRM of record)
+   - Sends a confirmation email to the client and a notification to `hello@velordigital.com` (Resend/Postmark)
+   - Optionally sends an SMS confirmation (Twilio)
+2. **Supabase** — connect a project for lead storage / Velor OS beta applicants.
+3. **Analytics** — add `NEXT_PUBLIC_GA_MEASUREMENT_ID` (or PostHog/Plausible) and wire a `<Script>` in `src/app/layout.tsx`.
+4. **Domain + hosting** — deploy to Vercel and point `velordigital.com` at it; update `siteConfig.url` in `src/lib/site-config.ts` if the domain differs.
+5. **Real testimonials & case study photography** — replace the placeholder testimonial slots and case-study color blocks in `src/lib/data/` as real assets come in.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `.env.example` for the environment variables these integrations will need.
+
+## Design system notes
+
+Dark-mode-only ("Ethereal Glass" direction): deep OLED black background, graphite surfaces, hairline borders, soft cyan/teal accent glow, silver gradient headline text. Cards use a "double-bezel" pattern (outer hairline shell + inner surface) instead of flat divs. All scroll animations use `whileInView` (IntersectionObserver-based) with `transform`/`opacity` only, so they're Core-Web-Vitals-safe and respect `prefers-reduced-motion`.
