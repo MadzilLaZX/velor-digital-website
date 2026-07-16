@@ -133,7 +133,7 @@ export function Hero() {
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   {["Lead In", "Qualify", "Book", "Confirm", "Follow-up"].map((step, i) => (
-                    <div key={step} className="flex flex-1 flex-col items-center gap-2">
+                    <div key={step} className="relative flex flex-1 flex-col items-center gap-2">
                       <motion.span
                         {...nodePulse}
                         transition={{ ...nodePulse.transition, delay: i * 0.4 }}
