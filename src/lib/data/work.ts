@@ -8,6 +8,7 @@ export type CaseStudy = {
   tags: string[];
   services: string[];
   color: string;
+  logo?: string;
 };
 
 export const caseStudies: CaseStudy[] = [
@@ -23,6 +24,7 @@ export const caseStudies: CaseStudy[] = [
     tags: ["Website", "Booking System", "Automation"],
     services: ["Foundation", "Operations"],
     color: "#3FD9C7",
+    logo: "/logos/clean-cabin.jpg",
   },
   {
     slug: "hasara-parfums",
@@ -36,6 +38,7 @@ export const caseStudies: CaseStudy[] = [
     tags: ["Website", "Brand", "E-commerce"],
     services: ["Foundation", "Marketing Manager"],
     color: "#C7B7FF",
+    logo: "/logos/hasara-parfums.png",
   },
   {
     slug: "premium-otto-care",
@@ -49,18 +52,6 @@ export const caseStudies: CaseStudy[] = [
     tags: ["Dashboard", "Automation", "CRM"],
     services: ["Operations", "Digital Department"],
     color: "#7DEDDA",
-  },
-  {
-    slug: "jb-auto-concept",
-    client: "JB Auto Concept",
-    tagline: "A digital department for a multi-service auto business.",
-    problem:
-      "JB Auto Concept needed a website, marketing, and internal systems, but couldn't justify hiring an in-house team.",
-    solution:
-      "Velor stepped in as the outsourced digital department: website, campaign management, booking workflow, and ongoing development support.",
-    result: "One accountable team running every digital function of the business.",
-    tags: ["Digital Department", "Marketing", "Website"],
-    services: ["Digital Department"],
-    color: "#5EEAD4",
+    logo: "/logos/poc.jpeg",
   },
 ];

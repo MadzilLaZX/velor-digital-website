@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { caseStudies } from "@/lib/data/work";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -38,15 +39,25 @@ export function WorkPreview({ showAll = false }: { showAll?: boolean }) {
                     background: `linear-gradient(135deg, ${study.color}22, transparent 70%), radial-gradient(circle at 30% 20%, ${study.color}33, transparent 60%)`,
                   }}
                 >
-                  <span
-                    className="font-display text-3xl font-medium tracking-tight opacity-80"
-                    style={{ color: study.color }}
-                  >
-                    {study.client
-                      .split(" ")
-                      .map((w) => w[0])
-                      .join("")}
-                  </span>
+                  {study.logo ? (
+                    <Image
+                      src={study.logo}
+                      alt={study.client}
+                      width={160}
+                      height={160}
+                      className="max-h-24 w-auto max-w-[70%] object-contain"
+                    />
+                  ) : (
+                    <span
+                      className="font-display text-3xl font-medium tracking-tight opacity-80"
+                      style={{ color: study.color }}
+                    >
+                      {study.client
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")}
+                    </span>
+                  )}
                 </div>
 
                 <div className="mb-3 flex flex-wrap gap-2">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { caseStudies } from "@/lib/data/work";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -88,15 +89,25 @@ export default async function CaseStudyPage({
                 background: `linear-gradient(135deg, ${study.color}26, transparent 70%), radial-gradient(circle at 25% 20%, ${study.color}3d, transparent 60%)`,
               }}
             >
-              <span
-                className="font-display text-6xl font-medium tracking-tight opacity-80 sm:text-8xl"
-                style={{ color: study.color }}
-              >
-                {study.client
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")}
-              </span>
+              {study.logo ? (
+                <Image
+                  src={study.logo}
+                  alt={study.client}
+                  width={320}
+                  height={320}
+                  className="max-h-40 w-auto max-w-[60%] object-contain sm:max-h-56"
+                />
+              ) : (
+                <span
+                  className="font-display text-6xl font-medium tracking-tight opacity-80 sm:text-8xl"
+                  style={{ color: study.color }}
+                >
+                  {study.client
+                    .split(" ")
+                    .map((w) => w[0])
+                    .join("")}
+                </span>
+              )}
             </div>
           </SectionReveal>
 
