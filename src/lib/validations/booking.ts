@@ -17,20 +17,56 @@ export const budgetRangeOptions = [
   "Not sure yet",
 ] as const;
 
-export const bookingFormSchema = z.object({
-  fullName: z.string().trim().min(2, "Enter your full name"),
-  email: z.string().trim().email("Enter a valid email address"),
-  phone: z.string().trim().min(7, "Enter a valid phone number"),
-  businessName: z.string().trim().min(2, "Enter your business name"),
-  serviceInterest: z.enum(serviceInterestOptions, {
-    message: "Select the service you're interested in",
-  }),
-  budgetRange: z.enum(budgetRangeOptions, {
-    message: "Select a budget range",
-  }),
-  projectDetails: z.string().trim().min(10, "Tell us a bit more about the project"),
-  preferredDateTime: z.string().trim().min(1, "Let us know a preferred date or time"),
-  website: z.string().max(0).optional(),
-});
+export const timeSlotOptions = [
+  "9:00 AM",
+  "10:00 AM",
+  "11:00 AM",
+  "12:00 PM",
+  "1:00 PM",
+  "2:00 PM",
+  "3:00 PM",
+  "4:00 PM",
+  "5:00 PM",
+  "6:00 PM",
+  "7:00 PM",
+  "8:00 PM",
+  "9:00 PM",
+] as const;
+
+export const bookingFormSchema = z
+  .object({
+    fullName: z.string().trim().min(2, "Enter your full name"),
+    email: z.string().trim().email("Enter a valid email address"),
+    phone: z.string().trim().min(7, "Enter a valid phone number"),
+    businessName: z.string().trim().min(2, "Enter your business name"),
+    serviceInterest: z.enum(serviceInterestOptions, {
+      message: "Select the service you're interested in",
+    }),
+    budgetRange: z.enum(budgetRangeOptions, {
+      message: "Select a budget range",
+    }),
+    projectDetails: z.string().trim().min(10, "Tell us a bit more about the project"),
+    isEmergency: z.boolean(),
+    preferredDate: z.string().trim().optional(),
+    preferredTime: z.enum(timeSlotOptions).optional(),
+    website: z.string().max(0).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isEmergency) return;
+    if (!data.preferredDate) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["preferredDate"],
+        message: "Pick a preferred date",
+      });
+    }
+    if (!data.preferredTime) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["preferredTime"],
+        message: "Pick a preferred time slot",
+      });
+    }
+  });
 
 export type BookingFormValues = z.infer<typeof bookingFormSchema>;

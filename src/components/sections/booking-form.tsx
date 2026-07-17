@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import {
   bookingFormSchema,
   type BookingFormValues,
@@ -14,6 +14,8 @@ import {
 } from "@/lib/validations/booking";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { Button } from "@/components/ui/button";
+import { DateCalendar } from "@/components/ui/date-calendar";
+import { TimeSlotPicker } from "@/components/ui/time-slot-picker";
 import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +34,7 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
     register,
     handleSubmit,
     setValue,
+    watch,
     reset,
     formState: { errors },
   } = useForm<BookingFormValues>({
@@ -39,9 +42,16 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
     defaultValues: {
       serviceInterest: undefined,
       budgetRange: undefined,
+      isEmergency: false,
+      preferredDate: undefined,
+      preferredTime: undefined,
       website: "",
     },
   });
+
+  const isEmergency = watch("isEmergency");
+  const preferredDate = watch("preferredDate");
+  const preferredTime = watch("preferredTime");
 
   useEffect(() => {
     if (
@@ -233,17 +243,76 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
               </div>
 
               <div className="sm:col-span-2">
-                <label className={labelClass} htmlFor="preferredDateTime">
-                  Preferred meeting date/time
-                </label>
-                <input
-                  id="preferredDateTime"
-                  className={fieldClass}
-                  placeholder="e.g. Weekday afternoons, week of July 14"
-                  {...register("preferredDateTime")}
-                />
-                {errors.preferredDateTime && (
-                  <p className={errorClass}>{errors.preferredDateTime.message}</p>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <span className={cn(labelClass, "mb-0")}>Preferred meeting date &amp; time</span>
+                  <button
+                    type="button"
+                    onClick={() => setValue("isEmergency", !isEmergency, { shouldValidate: true })}
+                    className={cn(
+                      "hover-glow focus-ring inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors duration-300",
+                      isEmergency
+                        ? "border-orange-400/40 bg-orange-400/15 text-orange-300"
+                        : "border-hairline bg-white/[0.02] text-muted hover:border-white/[0.14] hover:text-foreground"
+                    )}
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    {isEmergency ? "Emergency request selected" : "This can't wait — emergency request"}
+                  </button>
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {isEmergency ? (
+                    <motion.div
+                      key="emergency"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="rounded-2xl border border-orange-400/25 bg-orange-400/[0.06] p-5"
+                    >
+                      <p className="text-sm leading-relaxed text-foreground">
+                        Skip scheduling — our team will review your request right away and
+                        contact you as soon as possible.
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="scheduler"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="grid grid-cols-1 gap-4 sm:grid-cols-[auto_1fr]"
+                    >
+                      <DateCalendar
+                        value={preferredDate}
+                        onChange={(date) =>
+                          setValue("preferredDate", date, { shouldValidate: true })
+                        }
+                      />
+                      <div>
+                        <span className="mb-3 block text-[12px] text-muted-2">
+                          Available slots, 9 AM – 9 PM
+                        </span>
+                        <TimeSlotPicker
+                          value={preferredTime}
+                          onChange={(slot) =>
+                            setValue(
+                              "preferredTime",
+                              slot as BookingFormValues["preferredTime"],
+                              { shouldValidate: true }
+                            )
+                          }
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {!isEmergency && (errors.preferredDate || errors.preferredTime) && (
+                  <p className={errorClass}>
+                    {errors.preferredDate?.message ?? errors.preferredTime?.message}
+                  </p>
                 )}
               </div>
 
