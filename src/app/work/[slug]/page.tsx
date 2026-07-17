@@ -93,9 +93,9 @@ export default async function CaseStudyPage({
                 <Image
                   src={study.logo}
                   alt={study.client}
-                  width={320}
-                  height={320}
-                  className="max-h-40 w-auto max-w-[60%] object-contain sm:max-h-56"
+                  width={480}
+                  height={480}
+                  className="max-h-48 w-auto max-w-[70%] object-contain mix-blend-screen sm:max-h-64"
                 />
               ) : (
                 <span

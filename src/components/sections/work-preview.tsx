@@ -43,9 +43,9 @@ export function WorkPreview({ showAll = false }: { showAll?: boolean }) {
                     <Image
                       src={study.logo}
                       alt={study.client}
-                      width={160}
-                      height={160}
-                      className="max-h-24 w-auto max-w-[70%] object-contain"
+                      width={320}
+                      height={320}
+                      className="max-h-32 w-auto max-w-[80%] object-contain mix-blend-screen"
                     />
                   ) : (
                     <span
