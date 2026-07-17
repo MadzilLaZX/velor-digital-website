@@ -34,7 +34,7 @@ export function WorkPreview({ showAll = false }: { showAll?: boolean }) {
               >
                 <div
                   aria-hidden
-                  className="mb-6 flex h-40 items-center justify-center overflow-hidden rounded-2xl border border-hairline"
+                  className="mb-6 flex h-48 items-center justify-center overflow-hidden rounded-2xl border border-hairline"
                   style={{
                     background: `linear-gradient(135deg, ${study.color}22, transparent 70%), radial-gradient(circle at 30% 20%, ${study.color}33, transparent 60%)`,
                   }}
@@ -45,7 +45,7 @@ export function WorkPreview({ showAll = false }: { showAll?: boolean }) {
                       alt={study.client}
                       width={320}
                       height={320}
-                      className="max-h-32 w-auto max-w-[85%] object-contain sm:max-h-36"
+                      className="max-h-40 w-auto max-w-[85%] object-contain sm:max-h-44"
                     />
                   ) : (
                     <span
