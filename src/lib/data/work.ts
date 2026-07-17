@@ -9,6 +9,8 @@ export type CaseStudy = {
   services: string[];
   color: string;
   logo?: string;
+  video?: string;
+  videoPoster?: string;
 };
 
 export const caseStudies: CaseStudy[] = [
@@ -25,6 +27,8 @@ export const caseStudies: CaseStudy[] = [
     services: ["Foundation", "Operations"],
     color: "#3FD9C7",
     logo: "/logos/clean-cabin.png",
+    video: "/videos/clean-cabin-testimonial.mp4",
+    videoPoster: "/videos/clean-cabin-testimonial-poster.jpg",
   },
   {
     slug: "hasara-parfums",

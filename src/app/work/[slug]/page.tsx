@@ -8,6 +8,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { Badge } from "@/components/ui/badge";
 import { SectionReveal } from "@/components/ui/section-reveal";
 import { GlassPanel } from "@/components/ui/glass-panel";
+import { TestimonialVideo } from "@/components/ui/testimonial-video";
 import { CtaBand } from "@/components/sections/cta-band";
 import { jsonLdScriptProps, breadcrumbSchema } from "@/lib/schema";
 import { siteConfig } from "@/lib/site-config";
@@ -140,6 +141,15 @@ export default async function CaseStudyPage({
               </Badge>
             ))}
           </SectionReveal>
+
+          {study.video && (
+            <SectionReveal delay={0.28} className="mt-14">
+              <span className="mb-4 block text-[12px] uppercase tracking-[0.14em] text-muted-2">
+                Client testimonial
+              </span>
+              <TestimonialVideo src={study.video} poster={study.videoPoster} />
+            </SectionReveal>
+          )}
         </div>
       </section>
 
