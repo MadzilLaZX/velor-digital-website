@@ -50,40 +50,40 @@ export function DateCalendar({
   return (
     <div
       className={cn(
-        "w-full rounded-[1.5rem] border border-hairline bg-white/[0.02] p-5 sm:max-w-[300px]",
+        "w-full rounded-[1.75rem] border border-hairline bg-white/[0.02] p-6 sm:max-w-[380px]",
         className
       )}
     >
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <button
           type="button"
           onClick={() => canGoPrev && setViewMonth(new Date(year, month - 1, 1))}
           disabled={!canGoPrev}
           aria-label="Previous month"
-          className="focus-ring flex h-7 w-7 items-center justify-center rounded-full border border-hairline text-muted transition-all duration-300 hover:border-white/20 hover:text-foreground hover:shadow-[0_0_14px_-4px_var(--accent-glow)] disabled:pointer-events-none disabled:opacity-25"
+          className="focus-ring flex h-8 w-8 items-center justify-center rounded-full border border-hairline text-muted transition-all duration-300 hover:border-white/20 hover:text-foreground hover:shadow-[0_0_14px_-4px_var(--accent-glow)] disabled:pointer-events-none disabled:opacity-25"
         >
-          <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
+          <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
         </button>
-        <span className="font-display text-[15px] font-medium tracking-tight text-foreground">
+        <span className="font-display text-[17px] font-medium tracking-tight text-foreground">
           {viewMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </span>
         <button
           type="button"
           onClick={() => setViewMonth(new Date(year, month + 1, 1))}
           aria-label="Next month"
-          className="focus-ring flex h-7 w-7 items-center justify-center rounded-full border border-hairline text-muted transition-all duration-300 hover:border-white/20 hover:text-foreground hover:shadow-[0_0_14px_-4px_var(--accent-glow)]"
+          className="focus-ring flex h-8 w-8 items-center justify-center rounded-full border border-hairline text-muted transition-all duration-300 hover:border-white/20 hover:text-foreground hover:shadow-[0_0_14px_-4px_var(--accent-glow)]"
         >
-          <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+          <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
         </button>
       </div>
 
-      <div className="mb-3 grid grid-cols-7 gap-1 border-b border-hairline pb-3 text-center text-[10px] font-medium uppercase tracking-[0.12em] text-muted-2">
+      <div className="mb-4 grid grid-cols-7 gap-2 border-b border-hairline pb-4 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-muted-2">
         {WEEKDAY_LABELS.map((d) => (
           <span key={d}>{d}</span>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className="grid grid-cols-7 gap-2.5">
         {cells.map((date, i) => {
           if (!date) return <span key={`blank-${i}`} />;
           const disabled = date < minSelectable;
@@ -98,7 +98,7 @@ export function DateCalendar({
               onClick={() => onChange(iso)}
               aria-pressed={selected}
               className={cn(
-                "focus-ring relative flex aspect-square items-center justify-center rounded-full text-[13px] transition-all duration-200",
+                "focus-ring relative flex aspect-square items-center justify-center rounded-full text-[15px] transition-all duration-200",
                 disabled
                   ? "pointer-events-none cursor-not-allowed text-muted-2/35"
                   : "cursor-pointer text-foreground hover:bg-white/[0.08] hover:shadow-[0_0_16px_-4px_var(--accent-glow)]",
@@ -109,7 +109,7 @@ export function DateCalendar({
             >
               {date.getDate()}
               {isToday && !selected && (
-                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-muted-2" />
+                <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-muted-2" />
               )}
             </button>
           );
