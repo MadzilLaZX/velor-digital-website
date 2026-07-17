@@ -45,7 +45,7 @@ export function WorkPreview({ showAll = false }: { showAll?: boolean }) {
                       alt={study.client}
                       width={320}
                       height={320}
-                      className="max-h-32 w-auto max-w-[80%] object-contain"
+                      className="max-h-32 w-auto max-w-[85%] object-contain sm:max-h-36"
                     />
                   ) : (
                     <span

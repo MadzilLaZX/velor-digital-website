@@ -95,7 +95,7 @@ export default async function CaseStudyPage({
                   alt={study.client}
                   width={480}
                   height={480}
-                  className="max-h-48 w-auto max-w-[70%] object-contain sm:max-h-64"
+                  className="max-h-56 w-auto max-w-[78%] object-contain sm:max-h-72"
                 />
               ) : (
                 <span
