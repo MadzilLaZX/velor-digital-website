@@ -66,7 +66,7 @@ export function TestimonialVideo({
           aria-label={isPlaying ? "Pause video" : "Play video"}
           transition={{ type: "spring", stiffness: 380, damping: 32 }}
           className={cn(
-            "focus-ring pointer-events-auto flex items-center justify-center rounded-full bg-white/90 text-background shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-colors hover:bg-white",
+            "focus-ring pointer-events-auto flex cursor-pointer items-center justify-center rounded-full bg-white/90 text-background shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-colors hover:bg-white",
             isPlaying ? "h-10 w-10" : "h-16 w-16"
           )}
         >
