@@ -64,9 +64,10 @@ export function TestimonialVideo({
           layout
           onClick={toggle}
           aria-label={isPlaying ? "Pause video" : "Play video"}
+          style={{ cursor: "pointer" }}
           transition={{ type: "spring", stiffness: 380, damping: 32 }}
           className={cn(
-            "focus-ring pointer-events-auto flex cursor-pointer items-center justify-center rounded-full bg-white/90 text-background shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-colors hover:bg-white",
+            "focus-ring pointer-events-auto flex cursor-pointer items-center justify-center rounded-full bg-white/90 text-background shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-all duration-300 hover:bg-white hover:shadow-[0_8px_30px_rgba(0,0,0,0.35),0_0_0_1px_rgba(63,217,199,0.5),0_0_28px_8px_rgba(63,217,199,0.45)]",
             isPlaying ? "h-10 w-10" : "h-16 w-16"
           )}
         >
