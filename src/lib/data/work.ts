@@ -24,7 +24,7 @@ export const caseStudies: CaseStudy[] = [
     tags: ["Website", "Booking System", "Automation"],
     services: ["Foundation", "Operations"],
     color: "#3FD9C7",
-    logo: "/logos/clean-cabin.jpg",
+    logo: "/logos/clean-cabin.png",
   },
   {
     slug: "hasara-parfums",
@@ -52,6 +52,6 @@ export const caseStudies: CaseStudy[] = [
     tags: ["Dashboard", "Automation", "CRM"],
     services: ["Operations", "Digital Department"],
     color: "#7DEDDA",
-    logo: "/logos/poc.jpeg",
+    logo: "/logos/poc.png",
   },
 ];
