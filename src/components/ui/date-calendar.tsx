@@ -102,15 +102,14 @@ export function DateCalendar({
                 disabled
                   ? "pointer-events-none cursor-not-allowed text-muted-2/35"
                   : "cursor-pointer text-foreground hover:bg-white/[0.08] hover:shadow-[0_0_16px_-4px_var(--accent-glow)]",
-                isToday && disabled && "text-accent-soft",
+                isToday &&
+                  disabled &&
+                  "border border-accent/40 text-accent-soft shadow-[0_0_14px_-3px_var(--accent-glow)]",
                 selected &&
                   "bg-accent text-[#04120f] shadow-[0_0_20px_-4px_var(--accent-glow)] hover:bg-accent hover:shadow-[0_0_20px_-4px_var(--accent-glow)]"
               )}
             >
               {date.getDate()}
-              {isToday && !selected && (
-                <span className="absolute bottom-1.5 h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_var(--accent-glow)]" />
-              )}
             </button>
           );
         })}
