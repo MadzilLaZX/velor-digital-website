@@ -13,7 +13,7 @@ export function TimeSlotPicker({
   className?: string;
 }) {
   return (
-    <div className={cn("grid grid-cols-4 gap-1.5 sm:grid-cols-6", className)}>
+    <div className={cn("grid grid-cols-3 gap-2", className)}>
       {timeSlotOptions.map((slot) => {
         const selected = value === slot;
         return (
@@ -23,7 +23,7 @@ export function TimeSlotPicker({
             onClick={() => onChange(slot)}
             aria-pressed={selected}
             className={cn(
-              "focus-ring rounded-lg border px-2 py-2 text-[12px] font-medium transition-all duration-200",
+              "focus-ring rounded-xl border px-3 py-3 text-[13px] font-medium transition-all duration-200",
               selected
                 ? "border-accent/40 bg-accent/15 text-accent-soft shadow-[0_0_16px_-4px_var(--accent-glow)]"
                 : "border-hairline bg-white/[0.02] text-muted hover:border-white/[0.14] hover:bg-white/[0.05] hover:text-foreground hover:shadow-[0_0_14px_-4px_var(--accent-glow)]"
