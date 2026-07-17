@@ -33,8 +33,8 @@ const variants = {
   primary:
     "bg-gradient-to-b from-[#e9fbf7] to-[#b9ece1] text-[#04120f] shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_18px_40px_-16px_var(--accent-glow)] hover:shadow-[0_1px_0_rgba(255,255,255,0.5)_inset,0_22px_50px_-14px_var(--accent-glow)]",
   secondary:
-    "border border-hairline-strong bg-white/[0.03] text-foreground hover:bg-white/[0.06] hover:border-white/20",
-  ghost: "text-muted hover:text-foreground",
+    "hover-glow border border-hairline-strong bg-white/[0.03] text-foreground hover:bg-white/[0.06] hover:border-white/20",
+  ghost: "hover-glow-text text-muted hover:text-foreground",
 };
 
 const sizes = {

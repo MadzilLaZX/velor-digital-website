@@ -96,7 +96,7 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
               <p className="max-w-sm text-sm leading-relaxed text-muted">
                 Our team will contact you shortly. In the meantime, feel free to reach us
                 directly at{" "}
-                <a href={`mailto:${siteConfig.email}`} className="text-accent-soft underline underline-offset-4">
+                <a href={`mailto:${siteConfig.email}`} className="hover-glow-text text-accent-soft underline underline-offset-4">
                   {siteConfig.email}
                 </a>
                 .

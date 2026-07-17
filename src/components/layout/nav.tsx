@@ -54,7 +54,7 @@ export function Nav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "focus-ring rounded-full px-3.5 py-2 text-[13px] font-medium tracking-wide text-muted transition-colors duration-300 hover:text-foreground",
+                  "hover-glow-text focus-ring rounded-full px-3.5 py-2 text-[13px] font-medium tracking-wide text-muted transition-colors duration-300 hover:text-foreground",
                   pathname === item.href && "text-foreground"
                 )}
               >
@@ -74,7 +74,7 @@ export function Nav() {
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            className="focus-ring relative flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-foreground md:hidden"
+            className="hover-glow focus-ring relative flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-foreground md:hidden"
           >
             <AnimatePresence mode="wait" initial={false}>
               {open ? (
@@ -128,7 +128,7 @@ export function Nav() {
                 >
                   <Link
                     href={item.href}
-                    className="block py-3 text-center font-display text-3xl font-medium text-foreground"
+                    className="hover-glow-text block py-3 text-center font-display text-3xl font-medium text-foreground"
                   >
                     {item.label}
                   </Link>

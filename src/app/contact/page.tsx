@@ -81,7 +81,7 @@ export default function ContactPage() {
                         <a
                           key={channel.label}
                           href={channel.href}
-                          className="focus-ring w-fit transition-colors hover:text-foreground"
+                          className="hover-glow-text focus-ring w-fit transition-colors hover:text-foreground"
                         >
                           {content}
                         </a>
@@ -99,7 +99,7 @@ export default function ContactPage() {
                         target="_blank"
                         rel="noreferrer"
                         aria-label={s.label}
-                        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-muted transition-colors hover:border-white/20 hover:text-foreground"
+                        className="hover-glow focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-muted transition-colors hover:border-white/20 hover:text-foreground"
                       >
                         <s.icon className="h-4 w-4" />
                       </a>
@@ -133,7 +133,7 @@ export default function ContactPage() {
                   </div>
                   <Link
                     href="/services"
-                    className="focus-ring text-[13px] font-medium text-accent-soft underline underline-offset-4"
+                    className="hover-glow-text focus-ring text-[13px] font-medium text-accent-soft underline underline-offset-4"
                   >
                     See the full breakdown on the Services page
                   </Link>

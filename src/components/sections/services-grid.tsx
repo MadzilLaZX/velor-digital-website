@@ -27,8 +27,8 @@ export function ServicesGrid({ showHeading = true }: { showHeading?: boolean }) 
                 className={cn(
                   "group relative flex h-full scroll-mt-32 flex-col rounded-[1.75rem] border p-6 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] sm:p-7",
                   tier.featured
-                    ? "border-accent/30 bg-gradient-to-b from-accent/[0.08] to-transparent shadow-[0_0_60px_-20px_var(--accent-glow)]"
-                    : "border-hairline bg-white/[0.02] hover:border-white/[0.14] hover:bg-white/[0.035]"
+                    ? "border-accent/30 bg-gradient-to-b from-accent/[0.08] to-transparent shadow-[0_0_60px_-20px_var(--accent-glow)] hover:shadow-[0_0_80px_-16px_var(--accent-glow)]"
+                    : "hover-glow border-hairline bg-white/[0.02] hover:border-white/[0.14] hover:bg-white/[0.035]"
                 )}
               >
                 <span className="font-mono text-[11px] tracking-wide text-muted-2">
@@ -75,7 +75,7 @@ export function ServicesGrid({ showHeading = true }: { showHeading?: boolean }) 
 
         <p className="mt-8 text-center text-xs text-muted-2">
           Pricing is scoped per project on a{" "}
-          <Link href="/book" className="underline decoration-hairline-strong underline-offset-4 hover:text-muted">
+          <Link href="/book" className="hover-glow-text underline decoration-hairline-strong underline-offset-4 hover:text-muted">
             strategy call
           </Link>{" "}
           — every business&rsquo;s starting point is different.

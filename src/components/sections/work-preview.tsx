@@ -30,7 +30,7 @@ export function WorkPreview({ showAll = false }: { showAll?: boolean }) {
             <SectionReveal key={study.slug} delay={i * 0.08}>
               <Link
                 href={`/work/${study.slug}`}
-                className="group focus-ring relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-hairline bg-white/[0.02] p-6 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.035] sm:p-7"
+                className="hover-glow group focus-ring relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-hairline bg-white/[0.02] p-6 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.035] sm:p-7"
               >
                 <div
                   aria-hidden

@@ -60,7 +60,7 @@ export default async function CaseStudyPage({
         <div className="mx-auto max-w-3xl">
           <Link
             href="/work"
-            className="focus-ring mb-8 inline-flex items-center gap-2 text-[13px] text-muted transition-colors hover:text-foreground"
+            className="hover-glow-text focus-ring mb-8 inline-flex items-center gap-2 text-[13px] text-muted transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
             All work
@@ -164,7 +164,7 @@ export default async function CaseStudyPage({
                 <Link
                   key={s.slug}
                   href={`/work/${s.slug}`}
-                  className="focus-ring group rounded-2xl border border-hairline bg-white/[0.02] p-5 transition-colors duration-300 hover:border-white/[0.14]"
+                  className="hover-glow focus-ring group rounded-2xl border border-hairline bg-white/[0.02] p-5 transition-colors duration-300 hover:border-white/[0.14]"
                 >
                   <p className="font-display text-lg font-medium text-foreground">{s.client}</p>
                   <p className="mt-1 text-[13px] text-muted">{s.tagline}</p>

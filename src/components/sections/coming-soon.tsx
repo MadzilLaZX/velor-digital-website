@@ -24,10 +24,10 @@ export function ComingSoon() {
                 : "md:col-span-4";
             return (
               <SectionReveal key={product.name} delay={i * 0.06} className={spanClass}>
-                <div className="group relative flex h-full min-h-[200px] flex-col justify-between overflow-hidden rounded-[1.75rem] border border-hairline bg-white/[0.02] p-6 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.035] sm:p-7">
+                <div className="hover-glow group relative flex h-full min-h-[200px] flex-col justify-between overflow-hidden rounded-[1.75rem] border border-hairline bg-white/[0.02] p-6 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.035] sm:p-7">
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent/[0.08] blur-3xl transition-opacity duration-500 group-hover:opacity-100"
+                    className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent/[0.08] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
                   />
                   <div className="relative flex items-start justify-between gap-4">
                     <h3 className="font-display text-xl font-medium text-foreground sm:text-2xl">

@@ -62,7 +62,7 @@ export function DigitalDepartment() {
               {roles.map((role) => (
                 <div
                   key={role.label}
-                  className="flex flex-col gap-3 rounded-2xl border border-hairline bg-black/30 p-4 backdrop-blur-sm transition-colors duration-500 hover:border-accent/30"
+                  className="hover-glow flex flex-col gap-3 rounded-2xl border border-hairline bg-black/30 p-4 backdrop-blur-sm transition-colors duration-500 hover:border-accent/30"
                 >
                   <role.icon className="h-4 w-4 text-accent-soft" strokeWidth={1.5} />
                   <span className="text-[13px] leading-tight text-foreground">{role.label}</span>

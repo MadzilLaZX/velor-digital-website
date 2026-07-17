@@ -29,7 +29,7 @@ export function Faq() {
                     type="button"
                     onClick={() => setOpen(isOpen ? null : i)}
                     aria-expanded={isOpen}
-                    className="focus-ring flex w-full items-center justify-between gap-4 py-5 text-left"
+                    className="hover-glow-text focus-ring flex w-full items-center justify-between gap-4 py-5 text-left"
                   >
                     <span className="text-[15px] font-medium text-foreground">
                       {item.question}

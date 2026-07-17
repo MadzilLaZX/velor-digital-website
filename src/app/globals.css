@@ -146,6 +146,22 @@ body {
   border-radius: 4px;
 }
 
+/* Shared hover-glow language for interactive surfaces (cards, buttons, icon chips). */
+.hover-glow {
+  transition: box-shadow 0.4s ease;
+}
+.hover-glow:hover {
+  box-shadow: 0 0 40px -6px var(--accent-glow);
+}
+
+/* Same language for plain text links that have no box to glow behind. */
+.hover-glow-text {
+  transition: text-shadow 0.3s ease;
+}
+.hover-glow-text:hover {
+  text-shadow: 0 0 14px rgba(63, 217, 199, 0.55);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
