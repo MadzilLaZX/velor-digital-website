@@ -89,7 +89,7 @@ export const bookingConfig = {
     durationMinutes: envInt("STANDARD_MEETING_DURATION_MINUTES", 60),
     bufferMinutes: envInt("STANDARD_MEETING_BUFFER_MINUTES", 15),
     startHour: envInt("STANDARD_BOOKING_START_HOUR", 9),
-    endHour: envInt("STANDARD_BOOKING_END_HOUR", 20),
+    endHour: envInt("STANDARD_BOOKING_END_HOUR", 21),
   },
 
   emergency: {
