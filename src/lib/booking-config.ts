@@ -100,7 +100,7 @@ export const bookingConfig = {
     autoConfirm: envBool("EMERGENCY_AUTO_CONFIRM", false),
   },
 
-  slotIntervalMinutes: envInt("BOOKING_SLOT_INTERVAL_MINUTES", 15),
+  slotIntervalMinutes: envInt("BOOKING_SLOT_INTERVAL_MINUTES", 60),
   minimumNoticeHours: envInt("MINIMUM_BOOKING_NOTICE_HOURS", 12),
   maximumDaysAhead: envInt("MAXIMUM_BOOKING_DAYS_AHEAD", 60),
 
