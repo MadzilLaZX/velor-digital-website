@@ -1,0 +1,554 @@
+{
+  "name": "Velor Booking - 05 Retry Failed Notifications",
+  "nodes": [
+    {
+      "id": "schedule-trigger",
+      "name": "Every 30 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-bookings",
+      "name": "HTTP: Get All Bookings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -960,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1UkvzpXxs0aYLs3Znxp5mVuV3jEJBM5iEo-jOQAEPHEY/values/Bookings!A2:BA100000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "05GiWdmZswSbZZzW",
+          "name": "Velor - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "code-parse-rows",
+      "name": "Parse Rows To Objects",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -840,
+        0
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const headers = [\"Booking ID\",\"Submitted At\",\"Appointment Type\",\"Status\",\"Meeting Date\",\"Start Time\",\"End Time\",\"Time Zone\",\"Full Name\",\"Email\",\"Phone\",\"Normalized Phone\",\"Business Name\",\"Business Website\",\"Service Interested In\",\"Budget Range\",\"Project Details\",\"Where Did You Hear About Us?\",\"Lead Source Details\",\"Preferred Contact Method\",\"Additional Participants\",\"Agreement Accepted\",\"Agreement Version\",\"Agreement Timestamp\",\"Conflict Detected\",\"Calendar Event Created\",\"Calendar Event Link\",\"Google Meet Link\",\"Calendar Event ID\",\"Client Confirmation Sent\",\"Team Email Sent\",\"Telegram Notification Sent\",\"Rescheduled From\",\"Cancellation Reason\",\"Internal Notes\",\"Assigned To\",\"Last Updated At\",\"Updated By\",\"Submission Source\",\"UTM Source\",\"UTM Medium\",\"UTM Campaign\",\"UTM Content\",\"UTM Term\",\"Landing Page\",\"Referrer\",\"IP Address\",\"User Agent\",\"Automation Version\",\"Processing Error\",\"Submission ID (internal)\",\"Status Change Processed\",\"Retry Count\"];\nconst rows = $input.first().json.values || [];\nreturn rows.map((r, i) => {\n  const obj = {};\n  headers.forEach((h, idx) => { obj[h] = r[idx] !== undefined ? r[idx] : \"\"; });\n  obj.rowNumber = i + 2;\n  return { json: obj };\n});\n"
+      }
+    },
+    {
+      "id": "code-filter-failed",
+      "name": "Filter Rows With Failed Notifications",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        0
+      ],
+      "notes": "Only retries the specific notification(s) that failed — never re-creates the Calendar event or Sheets row. Add a 'Retry Count' column beyond AX to cap attempts.",
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const MAX_RETRIES = 5;\nreturn $input.all().filter(item => {\n  const j = item.json;\n  const hasFailure = j['Client Confirmation Sent'] === 'No' || j['Team Email Sent'] === 'No' || j['Telegram Notification Sent'] === 'No';\n  const retries = Number(j['Retry Count'] || 0);\n  return hasFailure && retries < MAX_RETRIES;\n});\n"
+      }
+    },
+    {
+      "id": "if-telegram-failed",
+      "name": "Telegram Failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -180
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json['Telegram Notification Sent'] }}",
+              "rightValue": "No",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "telegram-retry",
+      "name": "Telegram: Retry Send",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        -260
+      ],
+      "parameters": {
+        "chatId": "5038813723",
+        "text": "=RETRY — Booking {{ $json['Booking ID'] }} — {{ $json['Full Name'] }} — {{ $json['Meeting Date'] }} {{ $json['Start Time'] }} ET",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "zztcwsaom20LpOV7",
+          "name": "Velor - Telegram"
+        }
+      },
+      "webhookId": "af942e28-2e78-4e0a-bddb-0958dff21aa4"
+    },
+    {
+      "id": "if-team-email-failed",
+      "name": "Team Email Failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json['Team Email Sent'] }}",
+              "rightValue": "No",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "http-team-email-retry",
+      "name": "Resend: Retry Team Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "ishaatlabib.1@gmail.com",
+        "subject": "=RETRY: New Velor Strategy Call — {{ $json['Business Name'] }}",
+        "emailType": "html",
+        "message": "=<p>Booking ID: {{ $json['Booking ID'] }}</p><p>Name: {{ $json['Full Name'] }}</p><p>Date/Time: {{ $json['Meeting Date'] }} {{ $json['Start Time'] }} ET</p><p>Calendar: {{ $json['Calendar Event Link'] }}</p>",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GRKLVdCC2a16MphQ",
+          "name": "Velor Gmail Account"
+        }
+      },
+      "webhookId": "54784357-07f1-44eb-b95b-0c43cbf8457c"
+    },
+    {
+      "id": "if-client-email-failed",
+      "name": "Client Email Failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        180
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json['Client Confirmation Sent'] }}",
+              "rightValue": "No",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "http-client-email-retry",
+      "name": "Resend: Retry Client Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        180
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json['Email'] }}",
+        "subject": "=Your Velor Strategy Call — {{ $json['Meeting Date'] }} at {{ $json['Start Time'] }} ET",
+        "emailType": "html",
+        "message": "=<p>Hi {{ $json['Full Name'].split(' ')[0] }},</p><p>Your strategy call with Velor has been received and scheduled.</p><p>Date: {{ $json['Meeting Date'] }}<br/>Time: {{ $json['Start Time'] }} ET<br/>Google Meet: {{ $json['Google Meet Link'] }}<br/>Booking ID: {{ $json['Booking ID'] }}</p><p>Velor Digital</p>",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GRKLVdCC2a16MphQ",
+          "name": "Velor Gmail Account"
+        }
+      },
+      "webhookId": "867effc1-8063-4f7e-96ad-afccf35f6bb1"
+    },
+    {
+      "id": "code-merge-results",
+      "name": "Merge Retry Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "notes": "Resolves each merged item back to its original parsed row via itemMatching, since the retry-send nodes upstream may have replaced $json with their own API response.",
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const seen = new Map();\n$input.all().forEach((item, index) => {\n  const original = $('Parse Rows To Objects').itemMatching(index).json;\n  const id = original['Booking ID'];\n  if (!seen.has(id)) seen.set(id, original);\n});\nreturn Array.from(seen.values()).map(j => ({ json: { ...j, newRetryCount: Number(j[\"Retry Count\"] || 0) + 1 } }));\n"
+      }
+    },
+    {
+      "id": "http-update-notification-flags",
+      "name": "HTTP: Update Notification Flags",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "notes": "Assumes the retry nodes above succeeded for the fields that were retried; in a hardened version, branch on each node's own success before flipping its flag to Yes.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1UkvzpXxs0aYLs3Znxp5mVuV3jEJBM5iEo-jOQAEPHEY/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { valueInputOption: 'RAW', data: [ { range: 'Bookings!AD' + $json.rowNumber + ':AD' + $json.rowNumber, values: [['Yes']] }, { range: 'Bookings!AE' + $json.rowNumber + ':AE' + $json.rowNumber, values: [['Yes']] }, { range: 'Bookings!AF' + $json.rowNumber + ':AF' + $json.rowNumber, values: [['Yes']] }, { range: 'Bookings!BA' + $json.rowNumber + ':BA' + $json.rowNumber, values: [[$json.newRetryCount]] }, { range: 'Bookings!AK' + $json.rowNumber + ':AK' + $json.rowNumber, values: [[$now.toISO()]] } ] } }}"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "05GiWdmZswSbZZzW",
+          "name": "Velor - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "http-log-retry",
+      "name": "HTTP: Log Retry Attempt",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1UkvzpXxs0aYLs3Znxp5mVuV3jEJBM5iEo-jOQAEPHEY/values/Automation Log!A1:I1:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { values: [ [ $now.toISO(), $json['Booking ID'], $execution.id, 'NOTIFICATION_RETRY', 'retried', $json.newRetryCount, '', $json['Booking ID'], '1.0.0' ] ] } }}"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "05GiWdmZswSbZZzW",
+          "name": "Velor - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "if-max-retries",
+      "name": "Hit Max Retries?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Merge Retry Results').item.json.newRetryCount }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "telegram-alert-team-final-failure",
+      "name": "Telegram: Alert Team (final failure)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "chatId": "5038813723",
+        "text": "=⚠️ Booking {{ $('Merge Retry Results').item.json['Booking ID'] }} still has failed notifications after 5 retries. Check manually.",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "zztcwsaom20LpOV7",
+          "name": "Velor - Telegram"
+        }
+      },
+      "webhookId": "3e34ccbe-dccd-4e4a-8011-4c801640449a"
+    }
+  ],
+  "connections": {
+    "Every 30 Minutes": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Get All Bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Get All Bookings": {
+      "main": [
+        [
+          {
+            "node": "Parse Rows To Objects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Rows To Objects": {
+      "main": [
+        [
+          {
+            "node": "Filter Rows With Failed Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Rows With Failed Notifications": {
+      "main": [
+        [
+          {
+            "node": "Telegram Failed?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Team Email Failed?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Client Email Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Failed?": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Retry Send",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Retry Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: Retry Send": {
+      "main": [
+        [
+          {
+            "node": "Merge Retry Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Team Email Failed?": {
+      "main": [
+        [
+          {
+            "node": "Resend: Retry Team Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Retry Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend: Retry Team Email": {
+      "main": [
+        [
+          {
+            "node": "Merge Retry Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Email Failed?": {
+      "main": [
+        [
+          {
+            "node": "Resend: Retry Client Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Retry Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend: Retry Client Email": {
+      "main": [
+        [
+          {
+            "node": "Merge Retry Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Retry Results": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Update Notification Flags",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP: Log Retry Attempt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Update Notification Flags": {
+      "main": [
+        [
+          {
+            "node": "Hit Max Retries?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hit Max Retries?": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Alert Team (final failure)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

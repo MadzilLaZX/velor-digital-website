@@ -3,20 +3,25 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useMemo, useState, Suspense, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, Loader2 } from "lucide-react";
 import {
   bookingFormSchema,
   type BookingFormValues,
-  serviceInterestOptions,
-  budgetRangeOptions,
+  bookingAgreementVersion,
 } from "@/lib/validations/booking";
+import {
+  serviceOptions,
+  budgetOptions,
+  leadSourceOptions,
+  preferredContactMethodOptions,
+  BOOKING_AGREEMENT_TEXT,
+} from "@/lib/booking-config";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { Button } from "@/components/ui/button";
 import { DateCalendar } from "@/components/ui/date-calendar";
-import { TimeSlotPicker } from "@/components/ui/time-slot-picker";
-import { siteConfig } from "@/lib/site-config";
+import { TimeSlotPicker, type AvailableSlot } from "@/components/ui/time-slot-picker";
 import { cn } from "@/lib/utils";
 
 const fieldClass =
@@ -24,11 +29,42 @@ const fieldClass =
 const labelClass = "mb-2 block text-[12px] font-medium uppercase tracking-[0.1em] text-muted-2";
 const errorClass = "mt-1.5 text-[12px] text-red-400";
 
+function formatDateLabel(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+type SubmitResult =
+  | { kind: "standard"; bookingId: string; date: string; time: string }
+  | { kind: "emergency"; bookingId: string; date: string; time: string };
+
 function BookingFormInner({ defaultService }: { defaultService?: string }) {
   const searchParams = useSearchParams();
   const prefillService = defaultService ?? searchParams.get("service");
 
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [slots, setSlots] = useState<AvailableSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [submissionId, setSubmissionId] = useState("");
+  const [attribution, setAttribution] = useState<{ referrer: string; landingPage: string }>({
+    referrer: "",
+    landingPage: "",
+  });
+
+  useEffect(() => {
+    setSubmissionId(crypto.randomUUID());
+    setAttribution({
+      referrer: document.referrer ?? "",
+      landingPage: window.location.href,
+    });
+  }, []);
 
   const {
     register,
@@ -42,54 +78,133 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
     defaultValues: {
       serviceInterest: undefined,
       budgetRange: undefined,
-      isEmergency: false,
-      preferredDate: undefined,
-      preferredTime: undefined,
+      appointmentType: "standard",
+      meetingDate: undefined,
+      meetingTime: undefined,
+      emergencyDetails: "",
+      leadSource: undefined,
+      leadSourceOther: "",
+      preferredContactMethod: undefined,
+      additionalParticipants: [],
+      agreementAccepted: false as unknown as true,
+      businessWebsite: "",
       website: "",
     },
   });
 
-  const isEmergency = watch("isEmergency");
-  const preferredDate = watch("preferredDate");
-  const preferredTime = watch("preferredTime");
+  const appointmentType = watch("appointmentType");
+  const meetingDate = watch("meetingDate");
+  const meetingTime = watch("meetingTime");
+  const leadSource = watch("leadSource");
+  const agreementAccepted = watch("agreementAccepted");
+  const isEmergency = appointmentType === "emergency";
 
   useEffect(() => {
     if (
       prefillService &&
-      (serviceInterestOptions as readonly string[]).includes(prefillService)
+      serviceOptions.some((s) => s.id === prefillService)
     ) {
       setValue("serviceInterest", prefillService as BookingFormValues["serviceInterest"]);
     }
   }, [prefillService, setValue]);
 
+  const fetchAvailability = useCallback(
+    async (date: string, type: "standard" | "emergency") => {
+      setSlotsLoading(true);
+      setSlots([]);
+      try {
+        const res = await fetch(
+          `/api/booking/availability?appointmentType=${type}&date=${date}&timezone=America/Toronto`
+        );
+        const data = await res.json();
+        if (data.success) {
+          setSlots(data.slots ?? []);
+        } else {
+          setSlots([]);
+        }
+      } catch {
+        setSlots([]);
+      } finally {
+        setSlotsLoading(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (meetingDate) {
+      setValue("meetingTime", undefined);
+      fetchAvailability(meetingDate, appointmentType);
+    } else {
+      setSlots([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingDate, appointmentType]);
+
+  const scheduleLabel = useMemo(
+    () => (isEmergency ? "Preferred date & time (subject to approval)" : "Preferred meeting date & time"),
+    [isEmergency]
+  );
+
   const onSubmit = async (values: BookingFormValues) => {
     if (values.website) return; // honeypot triggered — silently drop
+    setSubmitError(null);
     setStatus("submitting");
 
-    // TODO(integration): replace with a real submission handler.
-    // Recommended wiring: POST to an n8n webhook (or a Next.js Route Handler
-    // at /api/booking) which then:
-    //   1. Upserts the lead into Supabase (or the CRM of record)
-    //   2. Sends a confirmation email to the client (Resend/Postmark) and a
-    //      notification to hello@velordigital.com
-    //   3. Optionally triggers an SMS confirmation via Twilio
-    // Example:
-    // await fetch("/api/booking", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify(values),
-    // });
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    const endpoint = values.appointmentType === "standard" ? "/api/booking/strategy-call" : "/api/booking/emergency";
 
-    setStatus("success");
-    reset();
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...values,
+          submissionId,
+          agreementVersion: bookingAgreementVersion,
+          agreementTimestamp: new Date().toISOString(),
+          pageUrl: attribution.landingPage,
+          referrer: attribution.referrer,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        if (data.code === "SLOT_NO_LONGER_AVAILABLE" && values.meetingDate) {
+          setSubmitError(data.message ?? "That time was just booked. Please choose another available time.");
+          fetchAvailability(values.meetingDate, values.appointmentType);
+          setStatus("idle");
+          return;
+        }
+        setSubmitError(
+          data.message ??
+            "We could not confirm this appointment right now. Your information has not been lost. Please try again or contact hello@velordigital.com."
+        );
+        setStatus("idle");
+        return;
+      }
+
+      setSubmitResult({
+        kind: values.appointmentType,
+        bookingId: data.bookingId,
+        date: values.meetingDate ?? "",
+        time: values.meetingTime ?? "",
+      });
+      setStatus("success");
+      reset();
+      setSubmissionId(crypto.randomUUID());
+    } catch {
+      setSubmitError(
+        "We could not confirm this appointment right now. Your information has not been lost. Please try again or contact hello@velordigital.com."
+      );
+      setStatus("idle");
+    }
   };
 
   return (
     <GlassPanel className="p-2" glow>
       <div className="relative rounded-[calc(1.75rem-0.375rem)] p-6 sm:p-9">
         <AnimatePresence mode="wait">
-          {status === "success" ? (
+          {status === "success" && submitResult ? (
             <motion.div
               key="success"
               initial={{ opacity: 0, y: 12 }}
@@ -100,17 +215,36 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
               <span className="flex h-14 w-14 items-center justify-center rounded-full border border-accent/30 bg-accent/10">
                 <CheckCircle2 className="h-7 w-7 text-accent-soft" strokeWidth={1.5} />
               </span>
-              <h3 className="font-display text-2xl font-medium text-foreground">
-                Request received.
-              </h3>
-              <p className="max-w-sm text-sm leading-relaxed text-muted">
-                Our team will contact you shortly. In the meantime, feel free to reach us
-                directly at{" "}
-                <a href={`mailto:${siteConfig.email}`} className="hover-glow-text text-accent-soft underline underline-offset-4">
-                  {siteConfig.email}
-                </a>
-                .
-              </p>
+              {submitResult.kind === "standard" ? (
+                <>
+                  <h3 className="font-display text-2xl font-medium text-foreground">
+                    Your strategy call has been booked.
+                  </h3>
+                  <p className="max-w-sm text-sm leading-relaxed text-muted">
+                    We sent the meeting details and video-call link to your email.
+                  </p>
+                  <div className="rounded-2xl border border-hairline bg-white/[0.02] px-5 py-4 text-[13px] text-muted-2">
+                    <p>Booking ID: {submitResult.bookingId}</p>
+                    {submitResult.date && <p>Date: {formatDateLabel(submitResult.date)}</p>}
+                    {submitResult.time && <p>Time: {submitResult.time} ET</p>}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-display text-2xl font-medium text-foreground">
+                    Your emergency meeting request has been received.
+                  </h3>
+                  <p className="max-w-sm text-sm leading-relaxed text-muted">
+                    This appointment is not confirmed yet. Our team will review your request and
+                    contact you shortly.
+                  </p>
+                  <div className="rounded-2xl border border-orange-400/25 bg-orange-400/[0.06] px-5 py-4 text-[13px] text-muted-2">
+                    <p>Request ID: {submitResult.bookingId}</p>
+                    {submitResult.date && <p>Requested date: {formatDateLabel(submitResult.date)}</p>}
+                    {submitResult.time && <p>Requested time: {submitResult.time} ET</p>}
+                  </div>
+                </>
+              )}
               <Button variant="secondary" size="md" onClick={() => setStatus("idle")}>
                 Submit another request
               </Button>
@@ -181,6 +315,40 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
               </div>
 
               <div>
+                <label className={labelClass} htmlFor="businessWebsite">
+                  Website or social link <span className="normal-case text-muted-2/70">(optional)</span>
+                </label>
+                <input
+                  id="businessWebsite"
+                  className={fieldClass}
+                  placeholder="yourbusiness.com"
+                  {...register("businessWebsite")}
+                />
+                {errors.businessWebsite && (
+                  <p className={errorClass}>{errors.businessWebsite.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className={labelClass} htmlFor="preferredContactMethod">
+                  Preferred contact method <span className="normal-case text-muted-2/70">(optional)</span>
+                </label>
+                <select
+                  id="preferredContactMethod"
+                  className={cn(fieldClass, "appearance-none")}
+                  defaultValue=""
+                  {...register("preferredContactMethod")}
+                >
+                  <option value="">No preference</option>
+                  {preferredContactMethodOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id} className="bg-surface">
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className={labelClass} htmlFor="serviceInterest">
                   Service interested in
                 </label>
@@ -193,9 +361,9 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
                   <option value="" disabled>
                     Select a service
                   </option>
-                  {serviceInterestOptions.map((opt) => (
-                    <option key={opt} value={opt} className="bg-surface">
-                      {opt}
+                  {serviceOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id} className="bg-surface">
+                      {opt.label}
                     </option>
                   ))}
                 </select>
@@ -217,9 +385,9 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
                   <option value="" disabled>
                     Select a range
                   </option>
-                  {budgetRangeOptions.map((opt) => (
-                    <option key={opt} value={opt} className="bg-surface">
-                      {opt}
+                  {budgetOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id} className="bg-surface">
+                      {opt.label}
                     </option>
                   ))}
                 </select>
@@ -234,7 +402,7 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
                   id="projectDetails"
                   rows={4}
                   className={cn(fieldClass, "resize-none")}
-                  placeholder="Tell us about your business and what you're looking to build."
+                  placeholder="Tell us about your business, what you're looking to build, and the main problem you want Velor to solve."
                   {...register("projectDetails")}
                 />
                 {errors.projectDetails && (
@@ -242,12 +410,77 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
                 )}
               </div>
 
+              <div>
+                <label className={labelClass} htmlFor="leadSource">
+                  Where did you hear about us?
+                </label>
+                <select
+                  id="leadSource"
+                  className={cn(fieldClass, "appearance-none")}
+                  defaultValue=""
+                  {...register("leadSource")}
+                >
+                  <option value="" disabled>
+                    Select an option
+                  </option>
+                  {leadSourceOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id} className="bg-surface">
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.leadSource && <p className={errorClass}>{errors.leadSource.message}</p>}
+              </div>
+
+              {leadSource === "other" && (
+                <div>
+                  <label className={labelClass} htmlFor="leadSourceOther">
+                    Tell us more
+                  </label>
+                  <input
+                    id="leadSourceOther"
+                    className={fieldClass}
+                    placeholder="Where did you hear about us?"
+                    {...register("leadSourceOther")}
+                  />
+                  {errors.leadSourceOther && (
+                    <p className={errorClass}>{errors.leadSourceOther.message}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="sm:col-span-2">
+                <label className={labelClass} htmlFor="additionalParticipants">
+                  Additional participants <span className="normal-case text-muted-2/70">(optional, comma-separated emails)</span>
+                </label>
+                <input
+                  id="additionalParticipants"
+                  className={fieldClass}
+                  placeholder="teammate@business.com, partner@business.com"
+                  onChange={(e) => {
+                    const emails = e.target.value
+                      .split(",")
+                      .map((v) => v.trim())
+                      .filter(Boolean);
+                    setValue("additionalParticipants", emails, { shouldValidate: true });
+                  }}
+                />
+                {errors.additionalParticipants && (
+                  <p className={errorClass}>Check the additional participant emails for typos.</p>
+                )}
+              </div>
+
               <div className="sm:col-span-2">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                  <span className={cn(labelClass, "mb-0")}>Preferred meeting date &amp; time</span>
+                  <span className={cn(labelClass, "mb-0")}>{scheduleLabel}</span>
                   <button
                     type="button"
-                    onClick={() => setValue("isEmergency", !isEmergency, { shouldValidate: true })}
+                    onClick={() => {
+                      const next = isEmergency ? "standard" : "emergency";
+                      setValue("appointmentType", next, { shouldValidate: true });
+                      setValue("meetingDate", undefined);
+                      setValue("meetingTime", undefined);
+                    }}
                     className={cn(
                       "hover-glow focus-ring inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors duration-300",
                       isEmergency
@@ -260,61 +493,92 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
                   </button>
                 </div>
 
-                <AnimatePresence mode="wait">
-                  {isEmergency ? (
-                    <motion.div
-                      key="emergency"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="rounded-2xl border border-orange-400/25 bg-orange-400/[0.06] p-5"
-                    >
-                      <p className="text-sm leading-relaxed text-foreground">
-                        Skip scheduling — our team will review your request right away and
-                        contact you as soon as possible.
-                      </p>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="scheduler"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="grid grid-cols-1 gap-4 sm:grid-cols-[auto_1fr]"
-                    >
-                      <DateCalendar
-                        value={preferredDate}
-                        onChange={(date) =>
-                          setValue("preferredDate", date, { shouldValidate: true })
-                        }
-                      />
-                      <div>
-                        <span className="mb-3 block text-[12px] text-muted-2">
-                          Available slots, 9 AM – 9 PM
-                        </span>
-                        <TimeSlotPicker
-                          value={preferredTime}
-                          onChange={(slot) =>
-                            setValue(
-                              "preferredTime",
-                              slot as BookingFormValues["preferredTime"],
-                              { shouldValidate: true }
-                            )
-                          }
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {isEmergency && (
+                  <div className="mb-4 rounded-2xl border border-orange-400/25 bg-orange-400/[0.06] p-5">
+                    <p className="text-sm leading-relaxed text-foreground">
+                      Skip regular scheduling — tell us your preferred time and what&rsquo;s urgent.
+                      Our team reviews every emergency request manually and will confirm, reschedule,
+                      or reach out with alternatives. This is not a guaranteed booking.
+                    </p>
+                  </div>
+                )}
 
-                {!isEmergency && (errors.preferredDate || errors.preferredTime) && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-[auto_1fr]">
+                  <DateCalendar
+                    value={meetingDate}
+                    onChange={(date) => setValue("meetingDate", date, { shouldValidate: true })}
+                  />
+                  <div>
+                    <span className="mb-3 flex items-center gap-1.5 text-[12px] text-muted-2">
+                      <Clock3 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      {isEmergency
+                        ? "Requested time slots — approval required"
+                        : "Available slots, Eastern Time"}
+                    </span>
+                    {meetingDate ? (
+                      <TimeSlotPicker
+                        slots={slots}
+                        value={meetingTime}
+                        onChange={(slot) => setValue("meetingTime", slot, { shouldValidate: true })}
+                        loading={slotsLoading}
+                      />
+                    ) : (
+                      <div className="rounded-xl border border-hairline bg-white/[0.02] p-4 text-[13px] text-muted-2">
+                        Select a date to see available times.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {(errors.meetingDate || errors.meetingTime) && (
                   <p className={errorClass}>
-                    {errors.preferredDate?.message ?? errors.preferredTime?.message}
+                    {errors.meetingDate?.message ?? errors.meetingTime?.message}
                   </p>
                 )}
               </div>
+
+              {isEmergency && (
+                <div className="sm:col-span-2">
+                  <label className={labelClass} htmlFor="emergencyDetails">
+                    What&rsquo;s the emergency or urgent issue?
+                  </label>
+                  <textarea
+                    id="emergencyDetails"
+                    rows={3}
+                    className={cn(fieldClass, "resize-none")}
+                    placeholder="Briefly describe what's happening and why it's urgent."
+                    {...register("emergencyDetails")}
+                  />
+                  {errors.emergencyDetails && (
+                    <p className={errorClass}>{errors.emergencyDetails.message}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="sm:col-span-2">
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-hairline bg-white/[0.02] p-4">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-hairline bg-transparent accent-[var(--accent)]"
+                    checked={agreementAccepted === true}
+                    onChange={(e) =>
+                      setValue("agreementAccepted", e.target.checked as unknown as true, {
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                  <span className="text-[13px] leading-relaxed text-muted">{BOOKING_AGREEMENT_TEXT}</span>
+                </label>
+                {errors.agreementAccepted && (
+                  <p className={errorClass}>{errors.agreementAccepted.message}</p>
+                )}
+              </div>
+
+              {submitError && (
+                <div className="sm:col-span-2 rounded-xl border border-red-400/25 bg-red-400/[0.06] p-4 text-[13px] text-red-300">
+                  {submitError}
+                </div>
+              )}
 
               <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-[12px] text-muted-2">
@@ -326,6 +590,8 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
                       <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
                       Sending...
                     </span>
+                  ) : isEmergency ? (
+                    "Request Emergency Meeting"
                   ) : (
                     "Request Strategy Call"
                   )}

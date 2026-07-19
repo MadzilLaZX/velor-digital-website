@@ -1,0 +1,558 @@
+{
+  "name": "Velor Booking - 04 Status Change Processor",
+  "nodes": [
+    {
+      "id": "schedule-trigger",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1400,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-bookings",
+      "name": "HTTP: Get All Bookings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1160,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1UkvzpXxs0aYLs3Znxp5mVuV3jEJBM5iEo-jOQAEPHEY/values/Bookings!A2:BA100000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "05GiWdmZswSbZZzW",
+          "name": "Velor - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "code-parse-rows",
+      "name": "Parse Rows To Objects",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        0
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const headers = [\"Booking ID\",\"Submitted At\",\"Appointment Type\",\"Status\",\"Meeting Date\",\"Start Time\",\"End Time\",\"Time Zone\",\"Full Name\",\"Email\",\"Phone\",\"Normalized Phone\",\"Business Name\",\"Business Website\",\"Service Interested In\",\"Budget Range\",\"Project Details\",\"Where Did You Hear About Us?\",\"Lead Source Details\",\"Preferred Contact Method\",\"Additional Participants\",\"Agreement Accepted\",\"Agreement Version\",\"Agreement Timestamp\",\"Conflict Detected\",\"Calendar Event Created\",\"Calendar Event Link\",\"Google Meet Link\",\"Calendar Event ID\",\"Client Confirmation Sent\",\"Team Email Sent\",\"Telegram Notification Sent\",\"Rescheduled From\",\"Cancellation Reason\",\"Internal Notes\",\"Assigned To\",\"Last Updated At\",\"Updated By\",\"Submission Source\",\"UTM Source\",\"UTM Medium\",\"UTM Campaign\",\"UTM Content\",\"UTM Term\",\"Landing Page\",\"Referrer\",\"IP Address\",\"User Agent\",\"Automation Version\",\"Processing Error\",\"Submission ID (internal)\",\"Status Change Processed\",\"Retry Count\"];\nconst rows = $input.first().json.values || [];\nreturn rows.map((r, i) => {\n  const obj = {};\n  headers.forEach((h, idx) => { obj[h] = r[idx] !== undefined ? r[idx] : \"\"; });\n  obj.rowNumber = i + 2;\n  return { json: obj };\n});\n"
+      }
+    },
+    {
+      "id": "code-filter-changed",
+      "name": "Filter Rows Needing Processing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        0
+      ],
+      "notes": "Add a 'Status Change Processed' column to the Bookings sheet (beyond AX) that tracks the last Status this workflow already handled, so edits are only acted on once.",
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const actionable = ['Done', 'Cancelled', 'Rescheduled'];\nreturn $input.all().filter(item => {\n  const status = item.json['Status'];\n  const lastProcessed = item.json['Status Change Processed'];\n  return actionable.includes(status) && status !== lastProcessed;\n});\n"
+      }
+    },
+    {
+      "id": "switch-status",
+      "name": "Switch: Status",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -680,
+        0
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json['Status'] }}",
+                    "rightValue": "Cancelled",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "outputKey": "Cancelled"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json['Status'] }}",
+                    "rightValue": "Rescheduled",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "outputKey": "Rescheduled"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json['Status'] }}",
+                    "rightValue": "Done",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "outputKey": "Done"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "calendar-delete-event",
+      "name": "Google Calendar: Delete Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -440,
+        -220
+      ],
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "mode": "id",
+          "value": "59d6b4475934c58001cc49d68297b86223195aa54cc1677d984081e02116ea19@group.calendar.google.com"
+        },
+        "eventId": "={{ $json['Calendar Event ID'] }}"
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "UwJXKVA6G1Sg27vb",
+          "name": "Velor - Google Calendar"
+        }
+      }
+    },
+    {
+      "id": "http-cancellation-email",
+      "name": "Resend: Cancellation Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -200,
+        -220
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $('Parse Rows To Objects').item.json['Email'] }}",
+        "subject": "Your Velor meeting has been cancelled",
+        "emailType": "html",
+        "message": "=<p>Hi {{ $('Parse Rows To Objects').item.json['Full Name'].split(' ')[0] }},</p><p>Your Velor meeting on {{ $('Parse Rows To Objects').item.json['Meeting Date'] }} at {{ $('Parse Rows To Objects').item.json['Start Time'] }} ET has been cancelled.</p><p>{{ $('Parse Rows To Objects').item.json['Cancellation Reason'] ? 'Reason: ' + $('Parse Rows To Objects').item.json['Cancellation Reason'] : '' }}</p><p>Reply to this email if you would like to rebook.</p><p>Velor Digital</p>",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GRKLVdCC2a16MphQ",
+          "name": "Velor Gmail Account"
+        }
+      },
+      "webhookId": "a8446e4c-7cfe-4fc4-87d7-8e4f0e888129"
+    },
+    {
+      "id": "sheets-mark-cancelled-processed",
+      "name": "HTTP: Mark Cancelled Processed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        40,
+        -220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1UkvzpXxs0aYLs3Znxp5mVuV3jEJBM5iEo-jOQAEPHEY/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { valueInputOption: 'RAW', data: [ { range: 'Bookings!AZ' + ($('Parse Rows To Objects').item.json.rowNumber) + ':AZ' + ($('Parse Rows To Objects').item.json.rowNumber), values: [[ 'Cancelled' ]] }, { range: 'Bookings!AK' + ($('Parse Rows To Objects').item.json.rowNumber) + ':AK' + ($('Parse Rows To Objects').item.json.rowNumber), values: [[ $now.toISO() ]] } ] } }}"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "05GiWdmZswSbZZzW",
+          "name": "Velor - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "code-compute-new-window",
+      "name": "Compute New Meeting Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -440,
+        0
+      ],
+      "notes": "Team enters the new Meeting Date / Start Time directly in the sheet before setting Status = Rescheduled.",
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const j = $input.first().json;\nconst timezone = j['Time Zone'] || 'America/Toronto' || 'America/Toronto';\nconst durationMin = Number(60 || 60);\n\nfunction timeZoneOffsetMinutes(instant, timeZone) {\n  const dtf = new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });\n  const parts = dtf.formatToParts(instant).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});\n  const asUtc = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);\n  return (asUtc - instant.getTime()) / 60000;\n}\nfunction zonedTimeToUtc(isoDate, hour, minute, timeZone) {\n  const guess = new Date(`${isoDate}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00Z`);\n  const offset = timeZoneOffsetMinutes(guess, timeZone);\n  return new Date(guess.getTime() - offset * 60000);\n}\n\nconst [_, hh, mm, ampm] = j['Start Time'].match(/(\\d+):(\\d+)\\s*(AM|PM)/i);\nlet hour = parseInt(hh, 10) % 12;\nif (/PM/i.test(ampm)) hour += 12;\nconst start = zonedTimeToUtc(j['Meeting Date'], hour, parseInt(mm, 10), timezone);\nconst end = new Date(start.getTime() + durationMin * 60000);\n\nreturn [{ json: { ...j, newStartIso: start.toISOString(), newEndIso: end.toISOString() } }];\n"
+      }
+    },
+    {
+      "id": "calendar-update-event",
+      "name": "Google Calendar: Update Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -200,
+        0
+      ],
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "mode": "id",
+          "value": "59d6b4475934c58001cc49d68297b86223195aa54cc1677d984081e02116ea19@group.calendar.google.com"
+        },
+        "eventId": "={{ $json['Calendar Event ID'] }}",
+        "updateFields": {
+          "start": "={{ $json.newStartIso }}",
+          "end": "={{ $json.newEndIso }}"
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "UwJXKVA6G1Sg27vb",
+          "name": "Velor - Google Calendar"
+        }
+      }
+    },
+    {
+      "id": "http-reschedule-email",
+      "name": "Resend: Reschedule Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        40,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $('Compute New Meeting Window').item.json['Email'] }}",
+        "subject": "Your Velor meeting has been rescheduled",
+        "emailType": "html",
+        "message": "=<p>Hi {{ $('Compute New Meeting Window').item.json['Full Name'].split(' ')[0] }},</p><p>Your Velor meeting has been rescheduled.</p><p>Previous time: {{ $('Compute New Meeting Window').item.json['Rescheduled From'] || 'see original confirmation' }}</p><p>New time: {{ $('Compute New Meeting Window').item.json['Meeting Date'] }} at {{ $('Compute New Meeting Window').item.json['Start Time'] }} ET</p><p>Velor Digital</p>",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GRKLVdCC2a16MphQ",
+          "name": "Velor Gmail Account"
+        }
+      },
+      "webhookId": "e357150a-e0cc-4e31-b539-01531822446d"
+    },
+    {
+      "id": "telegram-reschedule-update",
+      "name": "Telegram: Reschedule Update",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        40,
+        140
+      ],
+      "parameters": {
+        "chatId": "5038813723",
+        "text": "=🔵 RESCHEDULED\nBooking ID: {{ $('Compute New Meeting Window').item.json['Booking ID'] }}\nClient: {{ $('Compute New Meeting Window').item.json['Full Name'] }}\nNew time: {{ $('Compute New Meeting Window').item.json['Meeting Date'] }} {{ $('Compute New Meeting Window').item.json['Start Time'] }} ET",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "zztcwsaom20LpOV7",
+          "name": "Velor - Telegram"
+        }
+      },
+      "webhookId": "eab1d4c4-e0b8-4b9b-b0b5-e837432e6fa4"
+    },
+    {
+      "id": "sheets-mark-rescheduled-processed",
+      "name": "HTTP: Mark Rescheduled Processed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1UkvzpXxs0aYLs3Znxp5mVuV3jEJBM5iEo-jOQAEPHEY/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { valueInputOption: 'RAW', data: [ { range: 'Bookings!AZ' + ($('Compute New Meeting Window').item.json.rowNumber) + ':AZ' + ($('Compute New Meeting Window').item.json.rowNumber), values: [[ 'Rescheduled' ]] }, { range: 'Bookings!AK' + ($('Compute New Meeting Window').item.json.rowNumber) + ':AK' + ($('Compute New Meeting Window').item.json.rowNumber), values: [[ $now.toISO() ]] } ] } }}"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "05GiWdmZswSbZZzW",
+          "name": "Velor - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "sheets-mark-done-processed",
+      "name": "HTTP: Mark Done Processed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -440,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1UkvzpXxs0aYLs3Znxp5mVuV3jEJBM5iEo-jOQAEPHEY/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { valueInputOption: 'RAW', data: [ { range: 'Bookings!AZ' + ($('Parse Rows To Objects').item.json.rowNumber) + ':AZ' + ($('Parse Rows To Objects').item.json.rowNumber), values: [[ 'Done' ]] }, { range: 'Bookings!AK' + ($('Parse Rows To Objects').item.json.rowNumber) + ':AK' + ($('Parse Rows To Objects').item.json.rowNumber), values: [[ $now.toISO() ]] } ] } }}"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "05GiWdmZswSbZZzW",
+          "name": "Velor - Google Sheets"
+        }
+      }
+    },
+    {
+      "id": "http-log-status-change",
+      "name": "HTTP: Log Status Change",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        220
+      ],
+      "notes": "References Parse Rows To Objects directly — n8n's pairedItem lineage resolves this correctly regardless of which of the 3 branches (Cancelled/Rescheduled/Done) reached this shared node.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1UkvzpXxs0aYLs3Znxp5mVuV3jEJBM5iEo-jOQAEPHEY/values/Automation Log!A1:I1:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { values: [ [ $now.toISO(), $('Parse Rows To Objects').item.json['Booking ID'], $execution.id, 'STATUS_CHANGED', $('Parse Rows To Objects').item.json['Status'], 1, '', $('Parse Rows To Objects').item.json['Booking ID'], '1.0.0' ] ] } }}"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "05GiWdmZswSbZZzW",
+          "name": "Velor - Google Sheets"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Get All Bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Get All Bookings": {
+      "main": [
+        [
+          {
+            "node": "Parse Rows To Objects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Rows To Objects": {
+      "main": [
+        [
+          {
+            "node": "Filter Rows Needing Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Rows Needing Processing": {
+      "main": [
+        [
+          {
+            "node": "Switch: Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Status": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar: Delete Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Compute New Meeting Window",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP: Mark Done Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar: Delete Event": {
+      "main": [
+        [
+          {
+            "node": "Resend: Cancellation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend: Cancellation Email": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Mark Cancelled Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Mark Cancelled Processed": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Log Status Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute New Meeting Window": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar: Update Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar: Update Event": {
+      "main": [
+        [
+          {
+            "node": "Resend: Reschedule Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram: Reschedule Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend: Reschedule Email": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Mark Rescheduled Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Mark Rescheduled Processed": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Log Status Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Mark Done Processed": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Log Status Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

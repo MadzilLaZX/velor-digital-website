@@ -8,7 +8,7 @@ export function BookingSection() {
         <SectionHeading
           eyebrow="Book a strategy call"
           title="Tell us about your business."
-          description="A 20-minute call to understand where you are, where you want to be, and which tier gets you there fastest."
+          description="A focused strategy call to understand your business, identify the biggest digital bottlenecks, and map out the right next step."
           align="center"
           className="mx-auto mb-12"
         />

@@ -9,14 +9,14 @@ import { CalendarClock, Clock, Video } from "lucide-react";
 export const metadata: Metadata = {
   title: "Book a Strategy Call",
   description:
-    "Book a strategy call with Velor Digital. A 20-minute call to map out the right website, automation, or digital department engagement for your business.",
+    "Book a strategy call with Velor Digital. Approximately 45–60 minutes to map out the right website, automation, or digital department engagement for your business.",
   alternates: { canonical: "/book" },
   openGraph: { url: `${siteConfig.url}/book` },
 };
 
 const details = [
-  { icon: Clock, label: "20 minutes" },
-  { icon: Video, label: "Video call, link sent after booking" },
+  { icon: Clock, label: "Approximately 45–60 minutes" },
+  { icon: Video, label: "Online video meeting, link sent after booking" },
   { icon: CalendarClock, label: "Flexible scheduling, Ottawa & ET time zone" },
 ];
 
