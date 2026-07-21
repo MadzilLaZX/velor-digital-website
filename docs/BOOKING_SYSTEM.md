@@ -140,10 +140,10 @@ it's for your team's reference):
 |---|---|
 | Time Zone | America/Toronto |
 | Standard Start Hour | 9 |
-| Standard End Hour | 20 |
+| Standard End Hour | 21 |
 | Standard Duration Minutes | 60 |
 | Buffer Minutes | 15 |
-| Slot Interval Minutes | 15 |
+| Slot Interval Minutes | 60 |
 | Minimum Notice Hours | 12 |
 | Maximum Days Ahead | 60 |
 | Emergency Enabled | TRUE |
@@ -272,8 +272,8 @@ Calendar/Sheet before pointing production traffic at it.
 
 **Availability**
 - [ ] `GET /api/booking/availability?appointmentType=standard&date=<tomorrow>&timezone=America/Toronto`
-      returns slots between 9 AM–7 PM (last start, given a 60-min meeting and
-      8 PM boundary) — not 9 AM–8 PM.
+      returns hourly slots from 9 AM through 8 PM (last start, given a
+      60-min meeting and a 9 PM boundary).
 - [ ] A date less than `MINIMUM_BOOKING_NOTICE_HOURS` away returns fewer/no
       slots for the very next hours.
 - [ ] A date beyond `MAXIMUM_BOOKING_DAYS_AHEAD` returns an empty slot list.

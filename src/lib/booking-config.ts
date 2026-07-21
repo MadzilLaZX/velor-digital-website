@@ -27,7 +27,9 @@ export type BudgetOption = {
 };
 
 export const budgetOptions: BudgetOption[] = [
-  { id: "under_2500", label: "Under $2,500", minimum: null, maximum: 2500, currency: "CAD" },
+  { id: "under_500", label: "Under $500", minimum: 0, maximum: 499, currency: "CAD" },
+  { id: "500_1000", label: "$500 – $1,000", minimum: 500, maximum: 1000, currency: "CAD" },
+  { id: "1000_2500", label: "$1,000 – $2,500", minimum: 1000, maximum: 2500, currency: "CAD" },
   { id: "2500_5000", label: "$2,500 – $5,000", minimum: 2500, maximum: 5000, currency: "CAD" },
   { id: "5000_10000", label: "$5,000 – $10,000", minimum: 5000, maximum: 10000, currency: "CAD" },
   { id: "10000_25000", label: "$10,000 – $25,000", minimum: 10000, maximum: 25000, currency: "CAD" },

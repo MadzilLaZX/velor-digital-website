@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, Suspense, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Clock3, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, Clock3, Loader2 } from "lucide-react";
 import {
   bookingFormSchema,
   type BookingFormValues,
@@ -26,8 +26,18 @@ import { cn } from "@/lib/utils";
 
 const fieldClass =
   "focus-ring w-full rounded-xl border border-hairline bg-white/[0.02] px-4 py-3 text-sm text-foreground placeholder:text-muted-2 transition-colors duration-300 focus:border-accent/40";
+const selectClass = cn(fieldClass, "appearance-none pr-10");
 const labelClass = "mb-2 block text-[12px] font-medium uppercase tracking-[0.1em] text-muted-2";
 const errorClass = "mt-1.5 text-[12px] text-red-400";
+
+function SelectChevron() {
+  return (
+    <ChevronDown
+      className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-2"
+      strokeWidth={1.75}
+    />
+  );
+}
 
 function formatDateLabel(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -333,40 +343,46 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
                 <label className={labelClass} htmlFor="preferredContactMethod">
                   Preferred contact method <span className="normal-case text-muted-2/70">(optional)</span>
                 </label>
-                <select
-                  id="preferredContactMethod"
-                  className={cn(fieldClass, "appearance-none")}
-                  defaultValue=""
-                  {...register("preferredContactMethod")}
-                >
-                  <option value="">No preference</option>
-                  {preferredContactMethodOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id} className="bg-surface">
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="preferredContactMethod"
+                    className={selectClass}
+                    defaultValue=""
+                    {...register("preferredContactMethod")}
+                  >
+                    <option value="">No preference</option>
+                    {preferredContactMethodOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id} className="bg-surface">
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <SelectChevron />
+                </div>
               </div>
 
               <div>
                 <label className={labelClass} htmlFor="serviceInterest">
                   Service interested in
                 </label>
-                <select
-                  id="serviceInterest"
-                  className={cn(fieldClass, "appearance-none")}
-                  defaultValue=""
-                  {...register("serviceInterest")}
-                >
-                  <option value="" disabled>
-                    Select a service
-                  </option>
-                  {serviceOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id} className="bg-surface">
-                      {opt.label}
+                <div className="relative">
+                  <select
+                    id="serviceInterest"
+                    className={selectClass}
+                    defaultValue=""
+                    {...register("serviceInterest")}
+                  >
+                    <option value="" disabled>
+                      Select a service
                     </option>
-                  ))}
-                </select>
+                    {serviceOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id} className="bg-surface">
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <SelectChevron />
+                </div>
                 {errors.serviceInterest && (
                   <p className={errorClass}>{errors.serviceInterest.message}</p>
                 )}
@@ -376,21 +392,24 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
                 <label className={labelClass} htmlFor="budgetRange">
                   Budget range
                 </label>
-                <select
-                  id="budgetRange"
-                  className={cn(fieldClass, "appearance-none")}
-                  defaultValue=""
-                  {...register("budgetRange")}
-                >
-                  <option value="" disabled>
-                    Select a range
-                  </option>
-                  {budgetOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id} className="bg-surface">
-                      {opt.label}
+                <div className="relative">
+                  <select
+                    id="budgetRange"
+                    className={selectClass}
+                    defaultValue=""
+                    {...register("budgetRange")}
+                  >
+                    <option value="" disabled>
+                      Select a range
                     </option>
-                  ))}
-                </select>
+                    {budgetOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id} className="bg-surface">
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <SelectChevron />
+                </div>
                 {errors.budgetRange && <p className={errorClass}>{errors.budgetRange.message}</p>}
               </div>
 
@@ -414,21 +433,24 @@ function BookingFormInner({ defaultService }: { defaultService?: string }) {
                 <label className={labelClass} htmlFor="leadSource">
                   Where did you hear about us?
                 </label>
-                <select
-                  id="leadSource"
-                  className={cn(fieldClass, "appearance-none")}
-                  defaultValue=""
-                  {...register("leadSource")}
-                >
-                  <option value="" disabled>
-                    Select an option
-                  </option>
-                  {leadSourceOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id} className="bg-surface">
-                      {opt.label}
+                <div className="relative">
+                  <select
+                    id="leadSource"
+                    className={selectClass}
+                    defaultValue=""
+                    {...register("leadSource")}
+                  >
+                    <option value="" disabled>
+                      Select an option
                     </option>
-                  ))}
-                </select>
+                    {leadSourceOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id} className="bg-surface">
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <SelectChevron />
+                </div>
                 {errors.leadSource && <p className={errorClass}>{errors.leadSource.message}</p>}
               </div>
 
